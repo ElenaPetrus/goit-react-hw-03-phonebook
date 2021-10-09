@@ -1,30 +1,53 @@
-/* eslint-disable no-unused-vars */
+import React, { Component } from 'react';
+import { ContactForm } from './components/ContactForm/ContactForm';
+import { Filter } from './components/FIlter/Filter';
+import { ContactList } from './components/ContactList/ContactList';
+import s from './App.module.css';
+import shortid from 'shortid';
 
-import React, { Component } from "react";
-import { ContactForm } from "./components/ContactForm/ContactForm";
-import { Filter } from "./components/FIlter/Filter";
-import { ContactList } from "./components/ContactList/ContactList";
-import s from "./App.module.css";
-import shortid from "shortid";
+const initialState = [
+  { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
+  { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
+  { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
+  { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
+];
 
 class App extends Component {
   state = {
-    contacts: [
-      { id: "id-1", name: "Rosie Simpson", number: "459-12-56" },
-      { id: "id-2", name: "Hermione Kline", number: "443-89-12" },
-      { id: "id-3", name: "Eden Clements", number: "645-17-79" },
-      { id: "id-4", name: "Annie Copeland", number: "227-91-26" },
-    ],
-    filter: "",
+    contacts: [],
+    filter: '',
   };
 
-  componentDidUpdate() {
-    if (
-      this.getVisibleContacts().length === 0 &&
-      this.state.contacts.length > 0
-    )
-      alert("Соntact is not on the ContactList");
-  }
+  componentDidUpdate = (prevProps, prevState) => {
+    // console.log(prevState);
+    // console.log(this.state);
+    localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+  };
+
+  // operator объединение с null https://learn.javascript.ru/nullish-coalescing-operator
+  componentDidMount = () => {
+    const newContacts = JSON.parse(localStorage.getItem('contacts'));
+    this.setState({ contacts: newContacts ?? initialState });
+  };
+
+  //   componentDidMount =()=>{
+  //    const contacts =JSON.parse( localStorage.getItem('Contacts'))
+  //  console.log(contacts);
+  //  if (contacts!==null){
+  //    this.setState({
+  //      contacts
+  //    })
+  //  }
+  //}
+
+  // // не очень хороший вариант
+  //   componentDidUpdate() {
+  //     if (
+  //       this.getVisibleContacts().length === 0 &&
+  //       this.state.contacts.length > 0
+  //     )
+  //       alert("Соntact is not on the ContactList");
+  //   }
 
   addContact = ({ name, number }) => {
     const contact = {
@@ -33,31 +56,24 @@ class App extends Component {
       number,
     };
 
-    if (
-      this.state.contacts.find(
-        (contact) =>
-          contact.name.toLowerCase() === name.toLowerCase() ||
-          contact.number === number
-      )
-    ) {
-      alert(`${contact.name} witn ${contact.number} is already in Contacts`);
-      return;
-    }
+    this.state.contacts.find(
+      contact =>
+        contact.name.toLowerCase() === name.toLowerCase() ||
+        contact.number === number,
+    )
+      ? alert(`${contact.name} witn ${contact.number} is already in Contacts`)
+      : this.setState(prevState => ({
+          contacts: [contact, ...prevState.contacts],
+        }));
+  };
 
-    this.setState(({ contacts }) => ({
-      contacts: [...contacts, contact],
+  deleteContact = contactId => {
+    this.setState(prevState => ({
+      contacts: prevState.contacts.filter(contact => contact.id !== contactId),
     }));
   };
 
-  deleteContact = (contactId) => {
-    this.setState((prevState) => ({
-      contacts: prevState.contacts.filter(
-        (contact) => contact.id !== contactId
-      ),
-    }));
-  };
-
-  changeFilter = (e) => {
+  changeFilter = e => {
     this.setState({ filter: e.currentTarget.value });
   };
 
@@ -68,9 +84,9 @@ class App extends Component {
     const normalizedFilter = filter.toLowerCase();
 
     return contacts.filter(
-      (contact) =>
+      contact =>
         contact.name.toLowerCase().includes(normalizedFilter) ||
-        contact.number.includes(filter)
+        contact.number.includes(filter),
     );
   };
 
